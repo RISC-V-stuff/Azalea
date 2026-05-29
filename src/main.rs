@@ -39,7 +39,7 @@ impl CpuHooks for BranchTrace {
         }
     }
 
-    fn on_branch(&mut self, pc: u32, target: u32, taken: bool, _kind: BranchKind) {
+    fn on_branch(&mut self, pc: u32, target: u32, taken: bool, kind: BranchKind) {
         if taken {
             println!("{:08x} -> {:08x}", pc, target);
         } else {
@@ -47,7 +47,7 @@ impl CpuHooks for BranchTrace {
         }
 
         if let Some(next) = self.next.as_deref_mut() {
-            next.on_branch(pc, target, taken, _kind);
+            next.on_branch(pc, target, taken, kind);
         }
     }
 }
@@ -75,6 +75,7 @@ fn main() {
     let mut hooks = BranchTrace::new();
     //hooks.set_next(Box::new(BranchTrace::new()));
 
-    cpu.run(start, &mut bus, &mut hooks);
+    cpu.run(start, &mut bus, Some(&mut hooks));
     println!("Core paused execution by executing a system instruction.");
+    loop {}
 }
