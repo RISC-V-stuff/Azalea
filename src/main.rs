@@ -72,10 +72,10 @@ fn main() {
         &mut bus,
     );
 
-    let mut hooks = BranchTrace::new();
+    let hooks = BranchTrace::new();
     //hooks.set_next(Box::new(BranchTrace::new()));
 
-    cpu.run(start, &mut bus, Some(&mut hooks));
+    cpu.run(start, &mut bus, &mut Some(hooks));
     println!("Core paused execution by executing a system instruction.");
     loop {}
 }
