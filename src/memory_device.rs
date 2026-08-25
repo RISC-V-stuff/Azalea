@@ -6,23 +6,74 @@ pub mod peripherals;
 mod bus;
 pub use bus::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum AccessSize {
     Byte,
     Half,
     Word,
 }
 
-pub trait MemoryDevice {
-    fn contains_addr(&self, addr: u32) -> bool;
-    fn load(&mut self, addr: u32, size: AccessSize) -> u32;
-    fn store(&mut self, addr: u32, size: AccessSize, value: u32);
+#[derive(Copy, Clone, Debug)]
+pub struct Access {
+    pub value: u32,
+    pub cycles: u32,
 }
 
-// For "cycle accurate" simulation
-// add a function advance_clock(cycles) that way you can inform a decice of a time step,
-// reads will return a (value, cycles) pair with the latency, the return is inmediate, the receiver
-// can decide to model that latency in its behaviour or not, that way buses or similar passthrough devices
-// can decice to add latency to each operation and similar behaviours similarly you can model clock domains by
-// implementing a CDC that impls MemoryDevice and holds a Memory device (likely a bus) and that way you can perform
-// unit conversion between the cycles.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum MemFault {
+    Unmapped,
+    Misaligned,
+    ReadOnly,
+    WriteOnly,
+}
+
+pub type MemResult<T> = Result<T, MemFault>;
+
+/// A memory-mapped device: RAM, ROM, a peripheral, or a bus/passthrough
+/// element composing other devices.
+///
+/// /// - `load`/`store` return how many cycles *this specific request* took.
+///   That number is what the CPU actually experiences: "I asked for this
+///   word, it cost 40 cycles, now I have the value." Nothing about it is
+///   retroactive or deferred — it's the real answer to "how long until I
+///   can use this."
+///
+/// - A device may use its own internal state (left over from previous
+///   accesses) to decide that number — e.g. "is the row I need already
+///   open?" — because that's the only state it can causally know about.
+///   It cannot know about future accesses, same as real hardware.
+///
+/// - After an access completes, the *caller* (typically a `Bus`) is
+///   responsible for calling [`advance_clock`](MemoryDevice::advance_clock).
+///   The caller may choose to "block" on that request and advance the time
+///   with the returned value from the access or have multiple operation in
+///   flight by advancing the time a smaller interval.
+pub trait MemoryDevice {
+    /// Whether this device (or anything it owns, for passthrough devices
+    /// like a bus) claims the given address.
+    fn contains_addr(&self, addr: u32) -> bool;
+
+    /// Read `size` bytes from `addr`.
+    ///
+    /// Returns the value plus the number of cycles this specific request
+    /// took, computed from the device's state as of *before* this access
+    /// Returns `Err` if this device can't service the request
+    /// (e.g. `MemFault::Misaligned` for devices that enforce their own alignment)
+    fn load(&mut self, addr: u32, size: AccessSize) -> MemResult<Access>;
+
+    /// Write `value` (`size` bytes) to `addr`.
+    ///
+    /// Returns the number of cycles this request took, same contract as
+    /// `load`. Returns `Err` if this device can't service the write.
+    fn store(&mut self, addr: u32, size: AccessSize, value: u32) -> MemResult<u32>;
+
+    /// Advance this device's internal clock by `cycles` of elapsed
+    /// simulated time.
+    ///
+    /// /// Implementers: do **not** advance time-dependent state inside
+    /// `load`/`store` itself only in `advance_clock`.
+    ///
+    /// Devices with no time-dependent behavior can ignore this (default
+    /// no-op).
+    fn advance_clock(&mut self, _cycles: u32);
+}

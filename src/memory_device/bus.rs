@@ -33,11 +33,17 @@ impl MemoryDevice for Bus {
         self.devices.iter().any(|d| d.contains_addr(addr))
     }
 
-    fn load(&mut self, addr: u32, size: AccessSize) -> u32 {
+    fn advance_clock(&mut self, cycles: u32) {
+        for dev in &mut self.devices {
+            dev.advance_clock(cycles);
+        }
+    }
+
+    fn load(&mut self, addr: u32, size: AccessSize) -> MemResult<Access> {
         self.find_device(addr).load(addr, size)
     }
 
-    fn store(&mut self, addr: u32, size: AccessSize, value: u32) {
+    fn store(&mut self, addr: u32, size: AccessSize, value: u32) -> MemResult<u32> {
         self.find_device(addr).store(addr, size, value)
     }
 }

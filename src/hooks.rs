@@ -6,7 +6,9 @@ pub enum BranchKind {
 }
 
 pub trait CpuHooks {
-    fn set_next(&mut self, _next: Box<dyn CpuHooks>) {}
+    fn set_next(&mut self, _next: Box<dyn CpuHooks>);
+
+    fn on_run(&mut self);
 
     fn on_instruction(&mut self, pc: u32, instr: &Instruction);
 

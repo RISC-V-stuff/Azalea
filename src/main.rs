@@ -17,6 +17,12 @@ impl BranchTrace {
 }
 
 impl CpuHooks for BranchTrace {
+    fn on_run(&mut self) {
+        if let Some(next) = self.next.as_deref_mut() {
+            next.on_run();
+        }
+    }
+
     fn set_next(&mut self, next: Box<dyn CpuHooks>) {
         self.next = Some(next);
     }
@@ -41,9 +47,9 @@ impl CpuHooks for BranchTrace {
 
     fn on_branch(&mut self, pc: u32, target: u32, taken: bool, kind: BranchKind) {
         if taken {
-            println!("{:08x} -> {:08x}", pc, target);
+            // println!("{:08x} -> {:08x}", pc, target);
         } else {
-            println!("{:08x} -> x", pc);
+            // println!("{:08x} -> x", pc);
         }
 
         if let Some(next) = self.next.as_deref_mut() {
@@ -56,7 +62,7 @@ mod instructions;
 
 fn main() {
     let mut cpu = Cpu32::new();
-    let ram = Ram::new(0x80000000, 65 * 1024);
+    let ram = BasicRam::new(0x80000000, 65 * 1024);
     let uart = peripherals::uart::SimpleUart::new(
         0xFF000000,
         peripherals::uart::backends::TcpBackend::bind("127.0.0.1:5555"),

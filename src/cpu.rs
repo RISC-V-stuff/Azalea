@@ -34,10 +34,12 @@ impl Cpu32 {
     pub fn run(&mut self, pc: u32, mem: &mut impl MemoryDevice, hooks: &mut Option<impl CpuHooks>) {
         let mut hooks = hooks;
         self.pc = pc;
-        println!("starting @: {:08x}", self.pc);
+        if let Some(h) = hooks.as_mut() {
+            h.on_run();
+        }
 
         loop {
-            let instr: Instruction = mem.load(self.pc, AccessSize::Word).into();
+            let instr: Instruction = mem.load(self.pc, AccessSize::Word).unwrap().value.into();
             let mut pc_delta = 4;
             let mut must_break = false;
 
@@ -195,14 +197,16 @@ impl Cpu32 {
 
                 Instruction::Lb { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = Self::u8_sign_extend(mem.load(addr, AccessSize::Byte) as u8);
+                    let access = mem.load(addr, AccessSize::Byte);
+                    let value = Self::u8_sign_extend(access.unwrap().value as u8);
 
                     self.regs[rd as usize] = value;
                 }
 
                 Instruction::Lh { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = Self::u16_sign_extend(mem.load(addr, AccessSize::Half) as u16);
+                    let access = mem.load(addr, AccessSize::Half);
+                    let value = Self::u16_sign_extend(access.unwrap().value as u16);
 
                     self.regs[rd as usize] = value;
                 }
@@ -211,19 +215,19 @@ impl Cpu32 {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
                     let value = mem.load(addr, AccessSize::Word);
 
-                    self.regs[rd as usize] = value;
+                    self.regs[rd as usize] = value.unwrap().value;
                 }
 
                 Instruction::Lbu { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = mem.load(addr, AccessSize::Byte) as u8 as u32;
+                    let value = mem.load(addr, AccessSize::Byte).unwrap().value as u8 as u32;
 
                     self.regs[rd as usize] = value;
                 }
 
                 Instruction::Lhu { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = mem.load(addr, AccessSize::Half) as u16 as u32;
+                    let value = mem.load(addr, AccessSize::Half).unwrap().value as u16 as u32;
 
                     self.regs[rd as usize] = value;
                 }
