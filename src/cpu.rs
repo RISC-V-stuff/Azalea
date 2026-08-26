@@ -1,4 +1,4 @@
-use crate::hooks::{self, BranchKind, CpuHooks};
+use crate::hooks::{BranchKind, CpuHooks};
 use crate::instructions::Instruction;
 use crate::memory_device::*;
 
@@ -31,12 +31,11 @@ impl Cpu32 {
         }
     }
 
-    pub fn run(&mut self, pc: u32, mem: &mut impl MemoryDevice, hooks: &mut Option<impl CpuHooks>) {
+    pub fn run(&mut self, pc: u32, mem: &mut impl MemoryDevice, hooks: &mut impl CpuHooks) {
         let mut hooks = hooks;
         self.pc = pc;
-        if let Some(h) = hooks.as_mut() {
-            h.on_run();
-        }
+
+        hooks.on_run();
 
         loop {
             let instr: Instruction = mem.load(self.pc, AccessSize::Word).unwrap().value.into();
@@ -59,14 +58,13 @@ impl Cpu32 {
 
                     self.regs[rd as usize] = ret;
                     pc_delta = imm;
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            true,
-                            BranchKind::TODO,
-                        );
-                    };
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        true,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Jalr { rd, rs1, imm } => {
@@ -76,14 +74,12 @@ impl Cpu32 {
 
                     self.regs[rd as usize] = ret;
                     pc_delta = target.wrapping_sub(self.pc);
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            true,
-                            BranchKind::TODO,
-                        );
-                    };
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        true,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Beq { rs1, rs2, imm } => {
@@ -94,14 +90,13 @@ impl Cpu32 {
                     if taken {
                         pc_delta = imm;
                     }
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    }
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Bne { rs1, rs2, imm } => {
@@ -112,14 +107,13 @@ impl Cpu32 {
                     if taken {
                         pc_delta = imm;
                     }
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    };
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Blt { rs1, rs2, imm } => {
@@ -130,14 +124,13 @@ impl Cpu32 {
                     if taken {
                         pc_delta = imm;
                     }
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    };
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Bge { rs1, rs2, imm } => {
@@ -148,14 +141,13 @@ impl Cpu32 {
                     if taken {
                         pc_delta = imm;
                     }
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    };
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Bltu { rs1, rs2, imm } => {
@@ -166,14 +158,13 @@ impl Cpu32 {
                     if taken {
                         pc_delta = imm;
                     }
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    }
+
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Bgeu { rs1, rs2, imm } => {
@@ -185,14 +176,12 @@ impl Cpu32 {
                         pc_delta = imm;
                     }
 
-                    if let Some(h) = hooks.as_mut() {
-                        h.on_branch(
-                            self.pc,
-                            self.pc.wrapping_add(pc_delta),
-                            taken,
-                            BranchKind::TODO,
-                        );
-                    };
+                    hooks.on_branch(
+                        self.pc,
+                        self.pc.wrapping_add(pc_delta),
+                        taken,
+                        BranchKind::TODO,
+                    );
                 }
 
                 Instruction::Lb { rd, rs1, imm } => {
@@ -393,9 +382,7 @@ impl Cpu32 {
             self.regs[0] = 0;
             self.pc = self.pc.wrapping_add(pc_delta);
 
-            if let Some(h) = hooks.as_mut() {
-                h.on_instruction(self.pc, &instr);
-            }
+            hooks.on_instruction(self.pc, &instr);
 
             if must_break {
                 return;

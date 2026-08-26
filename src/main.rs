@@ -1,3 +1,5 @@
+use std::fs::File;
+
 use azalea::cpu::Cpu32;
 use azalea::loader::load;
 use azalea::memory_device::*;
@@ -6,54 +8,56 @@ use azalea::{
     hooks::{BranchKind, CpuHooks},
     instructions::Instruction,
 };
+use ctxp::Format::Text;
+use ctxp::{Event, Source};
 pub struct BranchTrace {
-    next: Option<Box<dyn CpuHooks>>,
+    encoder: ctxp::Encoder<File>,
 }
 
 impl BranchTrace {
     pub fn new() -> Self {
-        Self { next: None }
+        let f = File::create_new("Test_output.ctxp.txt").unwrap();
+        let src = Source {
+            id: 1,
+            name: "Test".into(),
+        };
+
+        Self {
+            encoder: ctxp::Encoder::new(f, &[src], Text).unwrap(),
+        }
     }
 }
 
 impl CpuHooks for BranchTrace {
-    fn on_run(&mut self) {
-        if let Some(next) = self.next.as_deref_mut() {
-            next.on_run();
-        }
-    }
+    fn on_run(&mut self) {}
 
-    fn set_next(&mut self, next: Box<dyn CpuHooks>) {
-        self.next = Some(next);
-    }
+    fn on_instruction(&mut self, pc: u32, instr: &Instruction) {}
 
-    fn on_instruction(&mut self, pc: u32, instr: &Instruction) {
-        if let Some(next) = self.next.as_deref_mut() {
-            next.on_instruction(pc, instr);
-        }
-    }
+    fn on_mem_read(&mut self, pc: u32, addr: u32, size: AccessSize, value: u32) {}
 
-    fn on_mem_read(&mut self, pc: u32, addr: u32, size: AccessSize, value: u32) {
-        if let Some(next) = self.next.as_deref_mut() {
-            next.on_mem_read(pc, addr, size, value);
-        }
-    }
-
-    fn on_mem_write(&mut self, pc: u32, addr: u32, size: AccessSize, value: u32) {
-        if let Some(next) = self.next.as_deref_mut() {
-            next.on_mem_write(pc, addr, size, value);
-        }
-    }
+    fn on_mem_write(&mut self, pc: u32, addr: u32, size: AccessSize, value: u32) {}
 
     fn on_branch(&mut self, pc: u32, target: u32, taken: bool, kind: BranchKind) {
         if taken {
-            // println!("{:08x} -> {:08x}", pc, target);
+            let event = Event {
+                source_id: 1,
+                kind: ctxp::EventKind::BranchTaken {
+                    origin: pc as u64,
+                    target: target as u64,
+                },
+                cycle: None,
+            };
+            self.encoder.write_event(&event).unwrap();
         } else {
-            // println!("{:08x} -> x", pc);
-        }
-
-        if let Some(next) = self.next.as_deref_mut() {
-            next.on_branch(pc, target, taken, kind);
+            let event = Event {
+                source_id: 1,
+                kind: ctxp::EventKind::BranchNotTaken {
+                    origin: pc as u64,
+                    target: target as u64,
+                },
+                cycle: None,
+            };
+            self.encoder.write_event(&event).unwrap();
         }
     }
 }
@@ -78,10 +82,10 @@ fn main() {
         &mut bus,
     );
 
-    let hooks = BranchTrace::new();
+    let mut hooks = BranchTrace::new();
     //hooks.set_next(Box::new(BranchTrace::new()));
 
-    cpu.run(start, &mut bus, &mut Some(hooks));
+    cpu.run(start, &mut bus, &mut hooks);
     println!("Core paused execution by executing a system instruction.");
     loop {}
 }

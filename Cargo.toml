@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 elftool = {git = "https://github.com/H-Cebrecos/elftool.git"}
+ctxp = {git = "https://github.com/H-Cebrecos/ctxp-rs.git"}
