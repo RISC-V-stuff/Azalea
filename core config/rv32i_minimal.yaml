@@ -1,0 +1,122 @@
+"$schema": config_schema.json#
+kind: architecture configuration
+type: fully configured
+name: RV32I_ALPHA
+description: Minimal RV32I, the simplest configuration possible
+params:
+  #system
+  MXLEN: 32
+  M_MODE_ENDIANNESS: little
+  VENDOR_ID_BANK: 0
+  VENDOR_ID_OFFSET: 0
+
+  # Machine CSRs
+  MISA_CSR_IMPLEMENTED: false
+  MARCHID_IMPLEMENTED: false
+  MIMPID_IMPLEMENTED: false
+  MCOUNTINHIBIT_IMPLEMENTED: false
+  CONFIG_PTR_ADDRESS: 0x0
+
+  # mtval behavior
+  MTVAL_WIDTH: 32
+  REPORT_VA_IN_MTVAL_ON_BREAKPOINT: false
+  REPORT_VA_IN_MTVAL_ON_LOAD_MISALIGNED: false
+  REPORT_VA_IN_MTVAL_ON_STORE_AMO_MISALIGNED: false
+  REPORT_VA_IN_MTVAL_ON_INSTRUCTION_MISALIGNED: false
+  REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT: false
+  REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT: false
+  REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT: false
+  REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION: false
+
+  # trap vector register
+  MTVEC_ACCESS: ro # read only
+  MTVEC_MODES: [0] # direct only (as oposed to vectored)
+  MTVEC_ILLEGAL_WRITE_BEHAVIOR: retain # preserve current value on illegal write
+
+  # trap behavior
+  TRAP_ON_EBREAK: true # Whether or not an EBREAK causes a synchronous exception
+  TRAP_ON_ECALL_FROM_M: true # Whether or not an ECALL-from-M-mode causes a synchronous exception
+  TRAP_ON_ILLEGAL_WLRL: true # Whether or not writing an illegal value to a WLRL CSR field causes a trap
+  TRAP_ON_RESERVED_INSTRUCTION: true # Whether or not fetching an unimplemented standard instruction and/or an undefined standard instruction from the standard/reserved opcode space causes a trap
+  TRAP_ON_UNIMPLEMENTED_CSR: true # Whether or not fetching an unimplemented instruction causes a trap
+  TRAP_ON_UNIMPLEMENTED_INSTRUCTION: true # Whether or not fetching an unimplemented instruction causes a trap
+  MISALIGNED_LDST: false # Support for misaligned loads and stores to main memory
+  MISALIGNED_LDST_EXCEPTION_PRIORITY: high # misaligment has higher priority than page-faults
+  PRECISE_SYNCHRONOUS_EXCEPTIONS: true # Whether or not all synchronous exceptions are precise. Sync exceptions don't cause unpredictable state
+
+  # memory
+  PHYS_ADDR_WIDTH: 32
+  NUM_PMP_ENTRIES: 0 # Physical memory protection registers
+  PMA_GRANULARITY: 12 # Physical memory attributes granule is 4KiB
+
+  # perf cntrs
+  HPM_COUNTER_EN:
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+  MCOUNTENABLE_EN:
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+implemented_extensions:
+  - [I, "2.1"]
+  - [Zicsr, "2.0"]
+  - [Sm, "1.13"]
