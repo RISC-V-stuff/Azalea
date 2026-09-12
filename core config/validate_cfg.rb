@@ -32,12 +32,18 @@ else
   result.reasons.each { |r| warn "  - #{r}" }
 end
 
+
+require 'fileutils'
+
+out_dir = "output"
+FileUtils.mkdir_p(out_dir)
+
+csrs_path = File.join(out_dir, "csrs.txt")
+instructions_path = File.join(out_dir, "instructions.txt")
+exceptions_path = File.join(out_dir, "exceptions.txt")
 # ---------------------------------------------------------------------------
 #  CSRs
 # ---------------------------------------------------------------------------
-
-csrs_path = "output" \ "csrs.txt"
-
 File.write(
   csrs_path,
   cfg_arch.implemented_csrs.map(&:name).join("\n") + "\n"
@@ -48,8 +54,6 @@ warn "Wrote #{csrs_path} (#{cfg_arch.implemented_csrs.size} CSRs)"
 # ---------------------------------------------------------------------------
 #  Instructions
 # ---------------------------------------------------------------------------
-instructions_path = "output" \ "instructions.txt"
-
 instructions = cfg_arch.implemented_extension_versions.flat_map do |extension|
   extension.all_instructions_that_must_be_implemented.map(&:name)
 end
@@ -65,11 +69,9 @@ warn "Wrote #{instructions_path} (#{instructions.size} instructions)"
 # ---------------------------------------------------------------------------
 #  Interrupts
 # ---------------------------------------------------------------------------
-instructions_path = "output" \ "exceptions.txt"
-
 File.write(
-  instructions_path,
+  exceptions_path,
   cfg_arch.implemented_interrupt_codes.map(&:name).join("\n") + "\n"
 )
 
-warn "Wrote #{instructions_path} (#{cfg_arch.implemented_interrupt_codes.size} exceptions)"
+warn "Wrote #{exceptions_path} (#{cfg_arch.implemented_interrupt_codes.size} exceptions)"
