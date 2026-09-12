@@ -6,9 +6,9 @@ use azalea::memory_device::*;
 
 use azalea::{
     hooks::{BranchKind, CpuHooks},
-    instructions::Instruction,
+    riscv::instructions::Instruction,
 };
-use ctxp::Format::Text;
+use ctxp::Format::{Binary, Text};
 use ctxp::{Event, Source};
 pub struct BranchTrace {
     encoder: ctxp::Encoder<File>,
@@ -16,15 +16,21 @@ pub struct BranchTrace {
 
 impl BranchTrace {
     pub fn new() -> Self {
-        let f = File::create_new("Test_output.ctxp.txt").unwrap();
+        let f = File::create_new("Test_output.ctxp").unwrap();
         let src = Source {
             id: 1,
             name: "Test".into(),
         };
 
         Self {
-            encoder: ctxp::Encoder::new(f, &[src], Text).unwrap(),
+            encoder: ctxp::Encoder::new(f, &[src], Binary).unwrap(),
         }
+    }
+}
+
+impl BranchTrace {
+    pub fn flush(&self) {
+        self.encoder.flush().unwrap();
     }
 }
 
@@ -62,8 +68,6 @@ impl CpuHooks for BranchTrace {
     }
 }
 
-mod instructions;
-
 fn main() {
     let mut cpu = Cpu32::new();
     let ram = BasicRam::new(0x80000000, 65 * 1024);
@@ -86,6 +90,7 @@ fn main() {
     //hooks.set_next(Box::new(BranchTrace::new()));
 
     cpu.run(start, &mut bus, &mut hooks);
+    hooks.flush();
     println!("Core paused execution by executing a system instruction.");
     loop {}
 }

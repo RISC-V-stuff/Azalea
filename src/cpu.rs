@@ -1,6 +1,6 @@
 use crate::hooks::{BranchKind, CpuHooks};
-use crate::instructions::Instruction;
 use crate::memory_device::*;
+use crate::riscv::instructions::Instruction;
 
 struct Interrupt;
 //TODO: this is all a prototipe
@@ -35,10 +35,12 @@ impl Cpu32 {
         let mut hooks = hooks;
         self.pc = pc;
 
+        let mut bus32 = Bus32::new(mem);
+
         hooks.on_run();
 
         loop {
-            let instr: Instruction = mem.load(self.pc, AccessSize::Word).unwrap().value.into();
+            let instr: Instruction = bus32.load(self.pc, AccessSize::Word).unwrap().value.into();
             let mut pc_delta = 4;
             let mut must_break = false;
 
@@ -186,7 +188,7 @@ impl Cpu32 {
 
                 Instruction::Lb { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let access = mem.load(addr, AccessSize::Byte);
+                    let access = bus32.load(addr, AccessSize::Byte);
                     let value = Self::u8_sign_extend(access.unwrap().value as u8);
 
                     self.regs[rd as usize] = value;
@@ -194,7 +196,7 @@ impl Cpu32 {
 
                 Instruction::Lh { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let access = mem.load(addr, AccessSize::Half);
+                    let access = bus32.load(addr, AccessSize::Half);
                     let value = Self::u16_sign_extend(access.unwrap().value as u16);
 
                     self.regs[rd as usize] = value;
@@ -202,21 +204,21 @@ impl Cpu32 {
 
                 Instruction::Lw { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = mem.load(addr, AccessSize::Word);
+                    let value = bus32.load(addr, AccessSize::Word);
 
                     self.regs[rd as usize] = value.unwrap().value;
                 }
 
                 Instruction::Lbu { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = mem.load(addr, AccessSize::Byte).unwrap().value as u8 as u32;
+                    let value = bus32.load(addr, AccessSize::Byte).unwrap().value as u8 as u32;
 
                     self.regs[rd as usize] = value;
                 }
 
                 Instruction::Lhu { rd, rs1, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
-                    let value = mem.load(addr, AccessSize::Half).unwrap().value as u16 as u32;
+                    let value = bus32.load(addr, AccessSize::Half).unwrap().value as u16 as u32;
 
                     self.regs[rd as usize] = value;
                 }
@@ -225,21 +227,21 @@ impl Cpu32 {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
                     let value = self.regs[rs2 as usize];
 
-                    mem.store(addr, AccessSize::Byte, value);
+                    bus32.store(addr, AccessSize::Byte, value);
                 }
 
                 Instruction::Sh { rs1, rs2, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
                     let value = self.regs[rs2 as usize];
 
-                    mem.store(addr, AccessSize::Half, value);
+                    bus32.store(addr, AccessSize::Half, value);
                 }
 
                 Instruction::Sw { rs1, rs2, imm } => {
                     let addr = self.regs[rs1 as usize].wrapping_add(imm);
                     let value = self.regs[rs2 as usize];
 
-                    mem.store(addr, AccessSize::Word, value);
+                    bus32.store(addr, AccessSize::Word, value);
                 }
 
                 Instruction::Addi { rd, rs1, imm } => {
@@ -363,8 +365,8 @@ impl Cpu32 {
                 }
 
                 Instruction::Fence { .. } => {}
-
                 Instruction::FenceTso => {}
+                Instruction::FenceI => {}
 
                 Instruction::Pause => {
                     must_break = true;
@@ -377,6 +379,12 @@ impl Cpu32 {
                 Instruction::Ecall => {
                     must_break = true;
                 }
+                Instruction::CSRRW { rd, rs1, csr } => todo!(),
+                Instruction::CSRRS { rd, rs1, csr } => todo!(),
+                Instruction::CSRRC { rd, rs1, csr } => todo!(),
+                Instruction::CSRRWI { rd, imm, csr } => todo!(),
+                Instruction::CSRRSI { rd, imm, csr } => todo!(),
+                Instruction::CSRRCI { rd, imm, csr } => todo!(),
             }
 
             self.regs[0] = 0;

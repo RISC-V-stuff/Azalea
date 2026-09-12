@@ -15,7 +15,7 @@ impl Bus {
         self.devices.push(Box::new(dev));
     }
 
-    fn find_device(&mut self, addr: u32) -> &mut dyn MemoryDevice {
+    fn find_device(&mut self, addr: u64) -> &mut dyn MemoryDevice {
         let dev = self.devices.iter_mut().find(|d| d.contains_addr(addr));
 
         match dev {
@@ -29,7 +29,7 @@ impl Bus {
 }
 
 impl MemoryDevice for Bus {
-    fn contains_addr(&self, addr: u32) -> bool {
+    fn contains_addr(&self, addr: u64) -> bool {
         self.devices.iter().any(|d| d.contains_addr(addr))
     }
 
@@ -39,11 +39,11 @@ impl MemoryDevice for Bus {
         }
     }
 
-    fn load(&mut self, addr: u32, size: AccessSize) -> MemResult<Access> {
+    fn load(&mut self, addr: u64, size: AccessSize) -> MemResult<Access> {
         self.find_device(addr).load(addr, size)
     }
 
-    fn store(&mut self, addr: u32, size: AccessSize, value: u32) -> MemResult<u32> {
+    fn store(&mut self, addr: u64, size: AccessSize, value: u64) -> MemResult<u64> {
         self.find_device(addr).store(addr, size, value)
     }
 }

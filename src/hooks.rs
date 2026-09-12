@@ -1,4 +1,4 @@
-use crate::{instructions::Instruction, memory_device::AccessSize};
+use crate::{memory_device::AccessSize, riscv::instructions::Instruction};
 
 #[derive(Debug, Copy, Clone)]
 pub enum BranchKind {

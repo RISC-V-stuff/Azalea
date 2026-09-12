@@ -52,15 +52,11 @@ pub fn load(path: &str, mem: &mut impl MemoryDevice) -> u32 {
         elf.read_at(ph.offset, &mut data).unwrap();
 
         for (i, byte) in data.iter().enumerate() {
-            mem.store(
-                ph.virt_addr as u32 + i as u32,
-                AccessSize::Byte,
-                *byte as u32,
-            );
+            mem.store(ph.virt_addr + i as u64, AccessSize::Byte, *byte as u64);
         }
 
         for i in ph.file_size..ph.mem_size {
-            mem.store(ph.virt_addr as u32 + i as u32, AccessSize::Byte, 0);
+            mem.store(ph.virt_addr + i, AccessSize::Byte, 0);
         }
     }
 
